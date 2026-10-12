@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Urban Mobility Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Urban Mobility Data Explorer</h1>
+    <p>NYC Taxi Trip Analytics & Movement Patterns</p>
+  </header>
+
+  <main class="dashboard-container">
+    <!-- KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <h3>Total Trips</h3>
+        <p id="kpi-total-trips">--</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Average Fare</h3>
+        <p id="kpi-avg-fare">--</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Average Distance</h3>
+        <p id="kpi-avg-distance">--</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Average Speed</h3>
+        <p id="kpi-avg-speed">--</p>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls-panel">
+      <div class="filter-group">
+        <label for="filter-borough">Pickup Borough:</label>
+        <select id="filter-borough">
+          <option value="ALL">All Boroughs</option>
+          <option value="Manhattan">Manhattan</option>
+          <option value="Brooklyn">Brooklyn</option>
+          <option value="Queens">Queens</option>
+          <option value="Bronx">Bronx</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-max-distance">Max Distance (miles):</label>
+        <input type="number" id="filter-max-distance" min="0" placeholder="e.g. 15" />
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-max-fare">Max Fare ($):</label>
+        <input type="number" id="filter-max-fare" min="0" placeholder="e.g. 60" />
+      </div>
+
+      <div class="filter-group">
+        <label for="sort-select">Sort By:</label>
+        <select id="sort-select">
+          <option value="fare-desc">Fare: High to Low</option>
+          <option value="fare-asc">Fare: Low to High</option>
+          <option value="distance-desc">Distance: Long to Short</option>
+        </select>
+      </div>
+
+      <button id="btn-reset" class="btn secondary">Reset Filters</button>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <h3>Hourly Mobility Demand</h3>
+        <canvas id="chart-hourly"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Trip Volume by Borough</h3>
+        <canvas id="chart-borough"></canvas>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <h3>Trip Records (Click any row to open full trip detail)</h3>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pickup Zone</th>
+              <th>Dropoff Zone</th>
+              <th>Distance (mi)</th>
+              <th>Fare ($)</th>
+              <th>Total ($)</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="trips-table-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="trip-modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="modal-close" class="close-btn">&times;</span>
+      <h2>Trip Breakdown</h2>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
