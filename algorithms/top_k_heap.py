@@ -61,3 +61,38 @@ def merge_sort_desc(entries: list) -> list:
         else:
             out.append(r); j += 1
     while i < len(left):
+        out.append(left[i]); i += 1
+    while j < len(right):
+        out.append(right[j]); j += 1
+    return out
+
+def top_k(items: Iterable[Any], k: int, score: callable[[Any], float | None], largest: bool = True) -> list:
+    if k <= 0:
+        return []
+    heap = MinHeap()
+    sign = 1 if largest else -1
+    seq = 0
+    for item in items:
+        s = score(item)
+        if s is None:
+            continue
+        entry = (sign * s, seq, item)
+        seq += 1
+        if len(heap) < k:
+            heap.push(entry)
+        elif MinHeap._less(heap.peek(), entry):
+            heap.replace_root(entry)
+    return [e[2] for e in merge_sort_desc(heap.entries())]
+
+if __name__ == "__main__":
+    import random
+    rng = random.Random(7)
+    data = [{"id": i, "v": rng.random()} for i in range(10_000)]
+    got = [d["id"] for d in top_k(data, 10, lambda d: d["v"])]
+    want = [d["id"] for d in sorted(data, key=lambda d: -d["v"])[:10]]
+    assert got == want, (got, want)
+    low = [d["id"] for d in top_k(data, 5, lambda d: d["v"], largest=False)]
+    assert low == [d["id"] for d in sorted(data, key=lambda d: d["v"])[:5]]
+    ties = top_k([("a", 1), ("b", 2), ("c", 2), ("d", 1)], 2, lambda t: t[1])
+    assert ties == [("b", 2), ("c", 2)], ties
+    print ("top_k self-test passed")
