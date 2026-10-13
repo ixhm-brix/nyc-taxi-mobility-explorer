@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS zones(
     location_id INTEGER PRIMARY KEY,
     zone_name TEXT NOT NULL UNIQUE,
     borough_id INTEGER NOT NULL REFERENCES borough(borough_id),
-    service_zone_id INTEGER NOT NULL REFERENCES service_zones(service_zone_id)
-    ,
+    service_zone_id INTEGER NOT NULL REFERENCES service_zones(service_zone_id),
     centroid_lon REAL CHECK(centroid-lon IS NULL OR centroid_lon BETWEEN -75.0 AND -73),
     centroid_lat REAL CHECK(centroid_lat IS NULL OR centroid_lat BETWEEN 40 AND 41.5),
     area_km2 REAL CHECK (area_km2 IS NULL OR area_km2 > 0)
