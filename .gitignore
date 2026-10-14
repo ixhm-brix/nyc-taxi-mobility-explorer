@@ -8,6 +8,6 @@ data/processed/*
 !data/processed/.gitkeep
 database/*.db
 database/*.building
-database/dump/
+database/dump/*.gz
 /taxi_zone_lookup.csv
 /taxi_zones.zip
