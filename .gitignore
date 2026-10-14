@@ -9,3 +9,5 @@ data/processed/*
 database/*.db
 database/*.building
 database/dump/
+/taxi_zone_lookup.csv
+/taxi_zones.zip
