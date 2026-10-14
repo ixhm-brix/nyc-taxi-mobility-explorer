@@ -136,3 +136,15 @@ A single page, top to bottom:
 
 - The database (2.4 GB) and the full dump are too large for GitHub, so they are generated rather than stored; `database/schema.sql` and the sample dump `database/dump/urban_mobility_sample.sql` are in the repo. To hand in the full dump, run `python database/load_data.py --dump` and share `database/dump/urban_mobility_full.sql.gz` (~290 MB) by link, for example Google Drive or a GitHub Release.
 - Restore a dump with `gunzip -c database/dump/urban_mobility_full.sql.gz | sqlite3 urban_mobility.db`.
+
+## Team Challenges.
+
+### 1. Commits pushed under my brother's GitHub account
+ 
+(Lewis Bagabo)During the summative, my personal laptop's battery died. Getting a replacement through my parents would take a couple of weeks, so I borrowed my brother's laptop to finish the work. While working on it, I forgot to sign out of his GitHub account in VS Code, and his Git name and email (`kellyhubert <irakellyhub@gmail.com>`) were still saved on the machine. As a result, two of my files, `backend/app.py` and `backend/db.py` (commit `a399e0c`, "Adding Flask application"), were pushed and appear under his name instead of mine. My brother is not a member of this group and did not contribute to the code. The work in that commit is mine.
+ 
+When I noticed the mistake, I signed out of his account and set my own identity (`blewis-bump <b.lewis@alustudent.com>`) for all later commits. I chose not to remove him as a contributor or rewrite the history. The original commit would still remain in GitHub's records, and deleting a contributor could look like an attempt to hide or alter the history, which could raise an academic integrity concern. I decided it was more honest to leave the history as it is and explain it here.
+ 
+### 2. CodeVibe AI usage increased after moving teammates' report files
+ 
+After finishing my part of the work, I noticed that my teammates' CodeVibe reports were not stored in a proper folder. I created a `codevibe-reports` folder and moved their report files into it. As soon as I moved them, CodeVibe's AI usage numbers started rising, and it asked me to review those files. When I began reviewing them, the numbers kept going up, so I stopped reviewing immediately, because these were not my files and I had not written them with AI.
