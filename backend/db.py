@@ -10,11 +10,11 @@ import sqlite3
 import threading 
 import time 
 from collections import OrderedDict
-from pathlib import path  
+from pathlib import Path    
 
 
-ROOT = path(__file__).resolve().parent.parent
-QUERY_DIR = path(__file__).resolve.parent / "queries"
+ROOT = Path(__file__).resolve().parent.parent
+QUERY_DIR = Path(__file__).resolve.parent / "queries"
 
 try:
     from dotenv import load_dotenv 
@@ -22,7 +22,7 @@ try:
 except ImportError: 
     pass 
 
-DB_PATH = path(os.getenv("DB_PATH", "database/urban_mobility.db"))
+DB_PATH = Path(os.getenv("DB_PATH", "database/urban_mobility.db"))
 if not DB_PATH.is_absolute():
     DB_PATH = ROOT / DB_PATH
 QUERY_TIMEOUT_S = float(os.getenv("QUERY_TIMEOUT_S", "8"))

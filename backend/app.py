@@ -12,10 +12,10 @@ from __future__ import annotations
 import gzip
 import os 
 import sys 
-from pathlib import path 
+from pathlib import Path  
 
 
-ROOT = path(__file__).resolve().parent.parent 
+ROOT = Path(__file__).resolve().parent.parent 
 sys.path.insert(0, str(ROOT))
 
 from flask import Flask, jsonify, request, send_from_directory 
