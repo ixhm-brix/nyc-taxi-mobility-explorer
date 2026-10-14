@@ -1,4 +1,4 @@
-""" Aggregate views over agg_zone_hour:Kpis ,time profiles and breakdown"""
+""" Aggregate views over agg_zone_hour: KPIs, time profiles and breakdowns"""
 from flask import Blueprint  
 
 from backend.db import query, query_one 
@@ -8,13 +8,19 @@ from backend.routes._common import filters, ok
 bp = Blueprint("analytics", __name__) 
 
 
-@bp.get("/api/summary ") 
+@bp.get("/api/summary") 
 def summary(): 
     f = filters() 
     where, params = f.where("agg") 
     current = query_one(render("summary", where), params) 
     baseline = query_one(render("summary")) 
     return ok({"current": current, "baseline": baseline}, f) 
+
+@bp.get("/api/timeseries/daily")
+def daily():
+    f = filters()
+    where, params = f.where("agg")
+    return ok(query(render("daily", where), params), f)
 
 @bp.get("/api/timeseries/hourly") 
 def hourly(): 
@@ -28,11 +34,11 @@ def heatmap():
     where, params = f.where("agg") 
     return ok(query(render("heatmap", where), params), f) 
 
-@bp.get("/api/breakdown") 
+@bp.get("/api/breakdown/distance")
 def by_distance(): 
     f = filters() 
     where, params = f.where("agg", alias="a") 
-    return ok(query(render("diistance_bands", where), params), f) 
+    return ok(query(render("distance_bands", where), params), f) 
 
 @bp.get("/api/breakdown/payment") 
 def by_payment(): 

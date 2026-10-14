@@ -1,9 +1,9 @@
 -- All origin->destination pairs with enough trips to be meaningful. 
--- Deliberatery unordered: ranking is done by algorithms/top_k_heap.py. 
+-- Deliberately unordered: ranking is done by algorithms/top_k_heap.py. 
 SELECT o.pu_location_id AS pu_id,
        o.do_location_id AS do_id,
        {od_metrics} 
 FROM agg_od o  
 {where} 
-Group BY o.pu_location_id, o.do_location_id 
+GROUP BY o.pu_location_id, o.do_location_id 
 HAVING SUM(trips) >= ?;

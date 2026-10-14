@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 import shapefile 
 from pyproj import CRS, Transformer
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
 
 TRIP_COLUMNS = {
@@ -17,7 +17,7 @@ TRIP_COLUMNS = {
     "tpep_pickup_datetime": "datetime64[us]",
     "tpep_dropoff_datetime": "datetime64[us]",
     "passenger_count": "Float64",
-    "trip_dance": "float64",
+    "trip_distance": "float64",
     "RatecodeID": "Float64",
     "store_and_fwd_flag": "string",
     "PULocationID": "Int64",
@@ -33,7 +33,7 @@ TRIP_COLUMNS = {
     "congestion_surcharge": "float64",
 }
 
-def find_trip_files(months: list[str] | None) -> list[path]:
+def find_trip_files(months: list[str] | None) -> list[Path]:
     if months:
         files = []
         for m in months:
@@ -63,7 +63,7 @@ def read_trip_file(path: Path, limit: int | None) -> pd.DataFrame:
             df[col] = pd.Series(pd.NA, index=df.index, dtype="Float64" if dtype == "float64" else dtype)
     df = df[list(TRIP_COLUMNS)]
     df.insert(0, "source_file", path.name)
-    df.isert(1, "source_row", range(len(df)))
+    df.insert(1, "source_row", range(len(df)))
     print(f"[load] {len(df):,} raw trips from {path.name}")
     return df
 
@@ -77,21 +77,21 @@ def load_zone_lookup() -> pd.DataFrame:
     z.columns = ["location_id", "borough", "zone", "service_zone"]
     for c in ("borough", "zone", "service_zone"):
         z[c] = z[c].fillna("Unknown").str.strip()
-    z.loc[z["borough"].isin(["N/A"]), "borough"] = "Oustide NYC"
+    z.loc[z["borough"].isin(["N/A"]), "borough"] = "Outside NYC"
     z.loc[z["service_zone"].isin(["N/A"]), "service_zone"] = "Unknown"
     print(f"[load] {len(z)} zones in lookup")
     return z
 
 def _ring_area_and_centroid(ring):
     a = cx = cy = 0.0
-    for (x0, y0), (x1, y1) in zip(ring[1:]):
+    for (x0, y0), (x1, y1) in zip(ring, ring[1:]):
         cross = x0 * y1 - x1 * y0
         a += cross
         cx += (x0 + x1) * cross
         cy += (y0 + y1) * cross
     a *= 0.5
     if a == 0:
-        return 0.0, ring [0]
+        return 0.0, ring[0]
     return a, (cx / (6 * a), cy / (6 * a))
 
 def load_zone_shapes(lookup: pd.DataFrame) -> tuple[dict, pd.DataFrame]:
@@ -158,7 +158,7 @@ def load_zone_shapes(lookup: pd.DataFrame) -> tuple[dict, pd.DataFrame]:
 def haversine_km(lon1, lat1, lon2, lat2):
     r = 6371.0088
     p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp, d1 = p2 - p1, math.radians(lon2 - lon1)
+    dp, dl = p2 - p1, math.radians(lon2 - lon1)
     h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 2 * r * math.asin(math.sqrt(h))
 

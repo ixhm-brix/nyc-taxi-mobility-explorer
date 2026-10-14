@@ -1,0 +1,67 @@
+{
+  "raw_rows": 300000,
+  "exclusions": {
+    "TIME_OUT_OF_PERIOD": 372,
+    "TIME_NON_POSITIVE": 272,
+    "DURATION_TOO_SHORT": 3444,
+    "DURATION_TOO_LONG": 1109,
+    "DISTANCE_ZERO": 2777,
+    "DISTANCE_TOO_LONG": 2,
+    "SPEED_IMPOSSIBLE": 316,
+    "FARE_BELOW_MINIMUM": 541,
+    "FARE_TOO_HIGH": 3,
+    "NEGATIVE_COMPONENT": 370,
+    "TOTAL_MISMATCH": 2,
+    "PASSENGERS_OVER_CAPACITY": 3,
+    "INVALID_VENDOR": 0,
+    "INVALID_RATECODE": 16,
+    "INVALID_LOCATION": 0,
+    "DUPLICATE_TRIP": 0
+  },
+  "fixes": {
+    "passenger_count_zero_to_null": 3788,
+    "passenger_count_missing": 0,
+    "ratecode_missing_to_unknown": 0,
+    "payment_type_zero_to_unknown": 0,
+    "store_fwd_missing_to_N": 0,
+    "congestion_surcharge_null_to_zero": 293949
+  },
+  "rules": {
+    "TIME_OUT_OF_PERIOD": "Pickup timestamp outside the months being loaded",
+    "TIME_NON_POSITIVE": "Dropoff is at or before pickup",
+    "DURATION_TOO_SHORT": "Trip shorter than 1 minute",
+    "DURATION_TOO_LONG": "Trip longer than 240 minutes",
+    "DISTANCE_ZERO": "Trip distance is zero or negative",
+    "DISTANCE_TOO_LONG": "Trip distance above 100 miles",
+    "SPEED_IMPOSSIBLE": "Average speed above 65 mph",
+    "FARE_BELOW_MINIMUM": "Fare below the $2.50 flag-drop (refunds, voids)",
+    "FARE_TOO_HIGH": "Fare above $500",
+    "NEGATIVE_COMPONENT": "A fee, tip, toll or surcharge is negative",
+    "TOTAL_MISMATCH": "Total differs from the sum of its components by more than $5",
+    "PASSENGERS_OVER_CAPACITY": "More than 6 passengers",
+    "INVALID_VENDOR": "VendorID not in the TLC data dictionary",
+    "INVALID_RATECODE": "RatecodeID is 99 or otherwise undefined",
+    "INVALID_LOCATION": "Pickup or dropoff LocationID outside 1-265",
+    "DUPLICATE_TRIP": "Same vendor, timestamps, zones, distance and fare as an earlier row",
+    "TIP_EXCEEDS_FARE": "kept: tip larger than the fare (generous or mistyped)",
+    "CRAWL_SPEED": "kept: under 2 mph for over 30 minutes (gridlock or meter left on)",
+    "TOTAL_UNEXPLAINED_FEE": "kept: total is $1-5 above its components (unlisted surcharge)",
+    "UNKNOWN_ZONE": "kept: pickup or dropoff zone is 264 Unknown / 265 Outside NYC",
+    "NEGOTIATED_SHORT": "kept: negotiated fare over $50 for under a mile"
+  },
+  "suspicious_kept": {
+    "TIP_EXCEEDS_FARE": 263,
+    "CRAWL_SPEED": 27,
+    "TOTAL_UNEXPLAINED_FEE": 871,
+    "UNKNOWN_ZONE": 5675,
+    "NEGOTIATED_SHORT": 22
+  },
+  "clean_rows": 293949,
+  "excluded_rows": 6051,
+  "excluded_pct": 2.017,
+  "months": [
+    "2019-01"
+  ],
+  "limit_per_month": 300000,
+  "runtime_s": 7.3
+}

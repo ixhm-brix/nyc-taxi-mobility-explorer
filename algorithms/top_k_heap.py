@@ -13,7 +13,7 @@ class MinHeap:
 
     @staticmethod
     def _less(x, y) -> bool:
-        if x[0] != y[1]:
+        if x[0] != y[0]:
             return x[0] < y[0]
         return x[1] > y[1]
 
@@ -21,7 +21,7 @@ class MinHeap:
         a = self._a
         a.append(entry)
         i = len(a) - 1
-        while i>0:
+        while i > 0:
             parent = (i - 1) // 2
             if self._less(a[i], a[parent]):
                 a[i], a[parent] = a[parent], a[i]
@@ -56,7 +56,7 @@ def merge_sort_desc(entries: list) -> list:
     out, i, j = [], 0, 0
     while i < len(left) and j < len(right):
         l, r = left[i], right[j]
-        if  l[0] > r[0] or (l[0] == r[0] and l[1] < r[1]):
+        if l[0] > r[0] or (l[0] == r[0] and l[1] < r[1]):
             out.append(l); i += 1
         else:
             out.append(r); j += 1
@@ -66,7 +66,7 @@ def merge_sort_desc(entries: list) -> list:
         out.append(right[j]); j += 1
     return out
 
-def top_k(items: Iterable[Any], k: int, score: callable[[Any], float | None], largest: bool = True) -> list:
+def top_k(items: Iterable[Any], k: int, score: Callable[[Any], float | None], largest: bool = True) -> list:
     if k <= 0:
         return []
     heap = MinHeap()
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     assert low == [d["id"] for d in sorted(data, key=lambda d: d["v"])[:5]]
     ties = top_k([("a", 1), ("b", 2), ("c", 2), ("d", 1)], 2, lambda t: t[1])
     assert ties == [("b", 2), ("c", 2)], ties
-    print ("top_k self-test passed")
+    print("top_k self-test passed")

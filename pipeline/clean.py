@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import callable
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,7 @@ MAX_DISTANCE_MI = 100.0
 MIN_FARE = 2.50
 MAX_FARE = 500.0
 MAX_PASSENGERS = 6
+MAX_SPEED_MPH = 65.0
 
 VALID_VENDORS = {1, 2, 4}
 VALID_RATECODES = {1, 2, 3, 4, 5, 6}
@@ -35,7 +36,7 @@ VALID_LOCATIONS = set(range(1, 266))
 class Rule:
     code: str
     description: str
-    test: callable[[pd.DataFrame], pd.Series]
+    test: Callable[[pd.DataFrame], pd.Series]
 
 def _duration_min(df):
     return (df["tpep_dropoff_datetime"] - df["tpep_pickup_datetime"]).dt.total_seconds() / 60
@@ -46,7 +47,7 @@ def _total_gap(d):
 
 
 RULES: list[Rule] = [
-    Rule("TIME_OUT_OF_PERIOD", "Pickup timestamp outside the months begin loaded",
+    Rule("TIME_OUT_OF_PERIOD", "Pickup timestamp outside the months being loaded",
          lambda d: ~d["tpep_pickup_datetime"].between(PERIOD["start"], PERIOD["end"], inclusive="left")),
     Rule("TIME_NON_POSITIVE", "Dropoff is at or before pickup",
          lambda d: _duration_min(d) <= 0),
@@ -61,7 +62,7 @@ RULES: list[Rule] = [
     Rule("SPEED_IMPOSSIBLE", f"Average speed above {MAX_SPEED_MPH:g} mph",
          lambda d: (_duration_min(d) > 0)
          & (d["trip_distance"] / (_duration_min(d) / 60) > MAX_SPEED_MPH)),
-    Rule("FARE_BELOW_MINIMUM", f"Fare below the ${MIN_FARE:.2f} flag_drop (refunds, voids)",
+    Rule("FARE_BELOW_MINIMUM", f"Fare below the ${MIN_FARE:.2f} flag-drop (refunds, voids)",
          lambda d: d["fare_amount"] < MIN_FARE),
     Rule("FARE_TOO_HIGH", f"Fare above ${MAX_FARE:g}",
          lambda d: d["fare_amount"] > MAX_FARE),
@@ -70,23 +71,22 @@ RULES: list[Rule] = [
                        "improvement_surcharge"]] < 0).any(axis=1)),
     Rule("TOTAL_MISMATCH", "Total differs from the sum of its components by more than $5",
          lambda d: _total_gap(d).abs() > 5.0),
-    Rule("PASSENGERS_OVER_CAPACITY", f"More Than {MAX_PASSENGERS} passengers",
+    Rule("PASSENGERS_OVER_CAPACITY", f"More than {MAX_PASSENGERS} passengers",
          lambda d: d["passenger_count"].fillna(0) > MAX_PASSENGERS),
     Rule("INVALID_VENDOR", "VendorID not in the TLC data dictionary",
-         lambda d: ~d["vendorID"].isin(VALID_VENDORS)),
-    Rule("INVALID_RATECODE", "RatecodeID" is 99 or otherwise undefined",
+         lambda d: ~d["VendorID"].isin(VALID_VENDORS)),
+    Rule("INVALID_RATECODE", "RatecodeID is 99 or otherwise undefined",
          lambda d: d["RatecodeID"].notna() & ~d["RatecodeID"].isin(VALID_RATECODES)),
     Rule("INVALID_LOCATION", "Pickup or dropoff LocationID outside 1-265",
          lambda d: ~d["PULocationID"].isin(VALID_LOCATIONS) | ~d["DOLocationID"].isin(VALID_LOCATIONS)),
 ]
 
-DUPLICATE_KEY = ["VendorID", "source_row", "reasons", "vendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime",
-                 "trip_distance", "PULocationID", "DOLocationID", "passenger_count",
-                 "payment_type", "fare_amount", "tip_amount", "total_amount"]
+DUPLICATE_KEY = ["VendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime",
+                 "PULocationID", "DOLocationID", "trip_distance", "fare_amount"]
 
-LOG_COLUMNS = ["source_file", "source_row", "reasons", "VendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime", "trip_distance", "PULocation", "DOLocationID", "passenger_count", "payment_type", "fare_amount", "tip_amount", "total_amount"]
+LOG_COLUMNS = ["source_file", "source_row", "reasons", "VendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime", "trip_distance", "PULocationID", "DOLocationID", "passenger_count", "payment_type", "fare_amount", "tip_amount", "total_amount"]
 
-def clean(df: pd.DataFrame) -> tuple[pd.DateFrame, dict]:
+def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     n_raw = len(df)
     summary: dict = {"raw_rows": n_raw, "exclusions": {}, "fixes": {}, "rules": {}}
 
@@ -96,7 +96,7 @@ def clean(df: pd.DataFrame) -> tuple[pd.DateFrame, dict]:
     # Duplicates 
     valid_so_far = ~flags.any(axis=1)
     dup = pd.Series(False, index=df.index)
-    dup.loc[valid_so_far] = df.loc[valid_so_far].duplicated(subset=DUPLICATE-KEY, keep="first")
+    dup.loc[valid_so_far] = df.loc[valid_so_far].duplicated(subset=DUPLICATE_KEY, keep="first")
     flags["DUPLICATE_TRIP"] = dup
 
     for r in RULES:
@@ -122,7 +122,7 @@ def clean(df: pd.DataFrame) -> tuple[pd.DateFrame, dict]:
     fixes["passenger_count_zero_to_null"] = int(zero_pax.sum())
     out.loc[zero_pax, "passenger_count"] = pd.NA
     fixes["passenger_count_missing"] = int(out["passenger_count"].isna().sum()) - fixes["passenger_count_zero_to_null"]
-    fixes["ratecode_missing_to_unknown"] = int(out["RtaecodeID"].isna().sum())
+    fixes["ratecode_missing_to_unknown"] = int(out["RatecodeID"].isna().sum())
     out["RatecodeID"] = out["RatecodeID"].fillna(99)
     fixes["payment_type_zero_to_unknown"] = int((out["payment_type"] == 0).sum())
     out.loc[out["payment_type"] == 0, "payment_type"] = 5
@@ -148,11 +148,12 @@ def clean(df: pd.DataFrame) -> tuple[pd.DateFrame, dict]:
         "TIP_EXCEEDS_FARE": "kept: tip larger than the fare (generous or mistyped)",
         "CRAWL_SPEED": "kept: under 2 mph for over 30 minutes (gridlock or meter left on)",
         "TOTAL_UNEXPLAINED_FEE": "kept: total is $1-5 above its components (unlisted surcharge)",
-        "UNKNOWN_ZONE": "kept: pickup or dropoff zone is 264 Uknown / 265 Outside NYC",
+        "UNKNOWN_ZONE": "kept: pickup or dropoff zone is 264 Unknown / 265 Outside NYC",
         "NEGOTIATED_SHORT": "kept: negotiated fare over $50 for under a mile",
     })
     any_sus = sus.any(axis=1)
     slog = out.loc[any_sus].copy()
+    slog["reasons"] = _fast_reasons(sus.loc[any_sus])
     slog[LOG_COLUMNS].to_csv(LOG_DIR / "suspicious_records.csv", index=False)
 
     summary["clean_rows"] = len(out)

@@ -31,7 +31,7 @@ def add_features(df: pd.DataFrame, zones: pd.DataFrame) -> pd.DataFrame:
     out["pickup_date"] = pu.dt.strftime("%Y-%m-%d")
     out["pickup_hour"] = pu.dt.hour.astype("int8")
     out["pickup_dow"] = pu.dt.dayofweek.astype("int8")
-    out["is_weekend"] = (out["pickup_dow"] > 5).astype("int8")
+    out["is_weekend"] = (out["pickup_dow"] >= 5).astype("int8")
     out["time_band"] = time_band(out["pickup_hour"])
 
     # speed
@@ -66,7 +66,7 @@ def add_features(df: pd.DataFrame, zones: pd.DataFrame) -> pd.DataFrame:
     out["fare_band_id"] = band(out["fare_amount"], FARE_BANDS)
 
     print(f"[features] median speed {out['avg_speed_mph'].median():.1f} mph . "
-          f"median $/mi {out['fare_per_mile'].median():2f} . "
+          f"median $/mi {out['fare_per_mile'].median():.2f} . "
           f"median card tip {np.nanmedian(out['tip_pct']):.1f}% . "
           f"median detour {np.nanmedian(out['detour_index']):.2f}")
     return out

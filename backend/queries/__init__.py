@@ -3,7 +3,7 @@ SQL lives in the .sql files next to this module. Each file may use two
 placeholders that are filled with trusted, code-generated fragments:
 
    {metrics} the shared measures definitions below 
-   {where} the where clause compiled by filters. Filters
+   {where} the where clause compiled by filters.Filters
 
 
 All user-supplied values are bound parameters, never interpolated.
@@ -16,13 +16,13 @@ from ..db import load_sql
 METRICS = """
     SUM(trips)                                                       AS trips,
     ROUND(SUM(sum_total), 2)                                         AS revenue,
-    ROUND(SUM(sum_fare))    / SUM(trips), 2)                         AS avg_fare,
+    ROUND(SUM(sum_fare)     / SUM(trips), 2)                         AS avg_fare,
     ROUND(SUM(sum_distance) / SUM(trips), 2)                         AS avg_distance,
     ROUND(SUM(sum_duration) / SUM(trips), 1)                         AS avg_duration,
-    ROUND(SUM(sum_distance) / SUM(sum_duration) / 60.0), 2)          AS avg_speed,
+    ROUND(SUM(sum_distance) / (SUM(sum_duration) / 60.0), 2)        AS avg_speed,
     ROUND(SUM(sum_fare)     / SUM(sum_distance), 2)                  AS fare_per_mile,
     ROUND(SUM(sum_tip_pct)  / NULLIF(SUM(card_trips), 0), 1)         AS tip_pct, 
-    ROUND(100.0 * SUM(aiport_trips)     / SUM(trips), 2)             AS airport_share,
+    ROUND(100.0 * SUM(airport_trips)    / SUM(trips), 2)             AS airport_share,
     ROUND(100.0 * SUM(cross_boro_trips) / SUM(trips), 2)             AS cross_borough_share,
     ROUND(100.0 * SUM(card_trips)       / SUM(trips), 1)             AS card_share
 """ 
@@ -32,8 +32,8 @@ OD_METRICS = """
     ROUND(SUM(sum_fare)      / SUM(trips), 2)                          AS avg_fare,
     ROUND(SUM(sum_distance)  / SUM(trips), 2)                          AS avg_distance,
     ROUND(SUM(sum_duration)  / SUM(trips), 1)                          AS avg_duration, 
-    ROUND(SUM(sum_distance)  / SUM(sum_duration) / 60.0), 2)           AS avg_speed, 
-    ROUND(SUM(sum_detour)    / NULLIF(SUM(detour_trips), 0), 3)        AS detour_index,  
+    ROUND(SUM(sum_distance)  / (SUM(sum_duration) / 60.0), 2)         AS avg_speed, 
+    ROUND(SUM(sum_detour)    / NULLIF(SUM(detour_trips), 0), 3)        AS detour_index
 """
 
 

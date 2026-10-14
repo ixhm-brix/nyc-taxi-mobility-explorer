@@ -9,7 +9,7 @@ from backend.routes._common import filters, ok
 bp = Blueprint("trips", __name__) 
 
 SORTS = {
-    "pickup": "t.pickup_date_time", 
+    "pickup": "t.pickup_datetime", 
     "distance": "t.trip_distance", 
     "fare": "t.fare_amount", 
     "duration": "t.trip_duration_min",
@@ -26,7 +26,7 @@ def trips():
         raise FilterError(f"sort must be one of {sorted(SORTS)}") 
     direction = "ASC" if request.args.get("order", "desc").lower() == "asc" else "DESC" 
     try: 
-        page = max(1, int(request.args.get("pade", 1))) 
+        page = max(1, int(request.args.get("page", 1))) 
         size = min(MAX_PAGE_SIZE, max(1, int(request.args.get("page_size", 25)))) 
     except ValueError as exc: 
         raise FilterError("page and page_size must be integers") from exc 
@@ -37,7 +37,7 @@ def trips():
     scan_area = False 
     if f.borough is not None and f.zone is None: 
         share = query_one("""SELECT 1.0 * SUM(CASE WHEN z.borough_id = ? THEN a.trips END) / SUM(a.trips) AS s
-                             FROM agg_zone_hour a JOIN zones z ON z.location_id = a.pu_location""", 
+                             FROM agg_zone_hour a JOIN zones z ON z.location_id = a.pu_location_id""", 
                              [f.borough])["s"] or 0 
         scan_area = share >= 0.05 
 
@@ -52,13 +52,13 @@ def trips():
 def trip_detail(trip_id: int): 
     row = query_one(render("trip_detail"), [trip_id]) 
     if not row: 
-        abort(404, description=f"trip{trip_id} not found") 
+        abort(404, description=f"trip {trip_id} not found") 
     peers = query_one(""" 
         SELECT SUM(trips) AS trips, 
             ROUND(SUM(sum_fare) / SUM(trips), 2) AS avg_fare,
             ROUND(SUM(sum_duration) / SUM(trips), 1) AS avg_duration,
             ROUND(SUM(sum_distance) / (SUM(sum_duration) / 60.0), 2) AS avg_speed 
         FROM agg_od 
-        WHERE pu_location = ? AND do_location_id = ? AND pickup_hour = ? AND is_weekend = ?""", 
-        [row["pu_location_id"], row["do_location"], row["pickup_hour"], row["is_weekend"]]) 
+        WHERE pu_location_id = ? AND do_location_id = ? AND pickup_hour = ? AND is_weekend = ?""", 
+        [row["pu_location_id"], row["do_location_id"], row["pickup_hour"], row["is_weekend"]]) 
     return ok({"trip": row, "route_peers": peers}) 

@@ -1,7 +1,7 @@
 -- NYC Taxi Mobility Database Schema Definition
 -- Verified and reviewed by team
 PRAGMA foreign_keys = ON;
-CREATE TABLE IF NOT EXISTS borough(
+CREATE TABLE IF NOT EXISTS boroughs(
     borough_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
@@ -11,27 +11,26 @@ CREATE TABLE IF NOT EXISTS service_zones(
 );
 CREATE TABLE IF NOT EXISTS zones(
     location_id INTEGER PRIMARY KEY,
-    zone_name TEXT NOT NULL UNIQUE,
-    borough_id INTEGER NOT NULL REFERENCES borough(borough_id),
+    zone_name TEXT NOT NULL,
+    borough_id INTEGER NOT NULL REFERENCES boroughs(borough_id),
     service_zone_id INTEGER NOT NULL REFERENCES service_zones(service_zone_id),
-    centroid_lon REAL CHECK(centroid-lon IS NULL OR centroid_lon BETWEEN -75.0 AND -73),
+    centroid_lon REAL CHECK(centroid_lon IS NULL OR centroid_lon BETWEEN -75.0 AND -73),
     centroid_lat REAL CHECK(centroid_lat IS NULL OR centroid_lat BETWEEN 40 AND 41.5),
     area_km2 REAL CHECK (area_km2 IS NULL OR area_km2 > 0)
 );
 CREATE TABLE IF NOT EXISTS zone_geometry(
-    locatiokn_id INTEGER PRIMARYKEY REFERENCES zones(location_id),
+    location_id INTEGER PRIMARY KEY REFERENCES zones(location_id),
     geojson TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS vendors(
     vendor_id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL 
+    name TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS rate_codes (
     rate_code_id INTEGER PRIMARY KEY,
     description TEXT NOT NULL UNIQUE
 );
 CREATE TABLE IF NOT EXISTS payment_types(
-    
     payment_type_id INTEGER PRIMARY KEY,
     description TEXT NOT NULL UNIQUE
 );
@@ -48,11 +47,11 @@ CREATE TABLE IF NOT EXISTS fare_bands (
     min_usd REAL NOT NULL,
     max_usd REAL NOT NULL,
     CHECK (max_usd > min_usd)
-)
+);
 CREATE TABLE IF NOT EXISTS time_bands(
     hour INTEGER PRIMARY KEY CHECK (hour BETWEEN 0 AND 23),
     band TEXT NOT NULL,
-    band_order INTEGER NOT NULL 
+    band_order INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS trips(
     trip_id INTEGER PRIMARY KEY,
@@ -64,9 +63,9 @@ CREATE TABLE IF NOT EXISTS trips(
     pickup_dow INTEGER NOT NULL CHECK (pickup_dow BETWEEN 0 AND 6),
     is_weekend INTEGER NOT NULL CHECK (is_weekend IN (0, 1)),
     passenger_count INTEGER CHECK (passenger_count IS NULL OR passenger_count BETWEEN 1 AND 6),
-    trip_distance REAL NOT NULL CHECK (trip_distance > 0 AND trip_distsnce <= 100),
-    rate_rate_code_id INTEGER NOT NULL REFERENCES rate_codes(rate_code_id),
-    store_and_fwd_flag TEXT NOT NULL CHECK (store_and_fwd_flag IN (0, 1)),
+    trip_distance REAL NOT NULL CHECK (trip_distance > 0 AND trip_distance <= 100),
+    rate_code_id INTEGER NOT NULL REFERENCES rate_codes(rate_code_id),
+    store_and_fwd_flag INTEGER NOT NULL CHECK (store_and_fwd_flag IN (0, 1)),
     pu_location_id INTEGER NOT NULL REFERENCES zones(location_id),
     do_location_id INTEGER NOT NULL REFERENCES zones(location_id),
     payment_type_id INTEGER NOT NULL REFERENCES payment_types(payment_type_id),
@@ -81,19 +80,19 @@ CREATE TABLE IF NOT EXISTS trips(
     trip_duration_min REAL NOT NULL CHECK (trip_duration_min BETWEEN 0 AND 240),
     avg_speed_mph REAL NOT NULL CHECK (avg_speed_mph BETWEEN 0 AND 70),
     fare_per_mile REAL NOT NULL,
-    tip_ptc REAL,
+    tip_pct REAL,
     straight_line_mi REAL,
     detour_index REAL,
     is_cross_borough INTEGER NOT NULL CHECK (is_cross_borough IN (0, 1)),
     is_airport_trip INTEGER NOT NULL CHECK (is_airport_trip IN (0, 1)),
     distance_band_id INTEGER NOT NULL REFERENCES distance_bands(distance_band_id),
     fare_band_id INTEGER NOT NULL REFERENCES fare_bands(fare_band_id),
-    CHECK (dropoff_datetime > pickup_datetime),
-    
+    CHECK (dropoff_datetime > pickup_datetime)
 );
-CRAETE TABLE IF NOT EXISTS agg_zone_hour (
+CREATE TABLE IF NOT EXISTS agg_zone_hour (
     pickup_date TEXT NOT NULL,
-    pickup_hour INTEGER NOT NULL ,
+    pickup_hour INTEGER NOT NULL,
+    pickup_dow INTEGER NOT NULL,
     pu_location_id INTEGER NOT NULL REFERENCES zones(location_id),
     payment_type_id INTEGER NOT NULL REFERENCES payment_types(payment_type_id),
     distance_band_id INTEGER NOT NULL REFERENCES distance_bands(distance_band_id),
@@ -105,13 +104,12 @@ CRAETE TABLE IF NOT EXISTS agg_zone_hour (
     sum_fare REAL NOT NULL,
     sum_tip REAL NOT NULL,
     sum_total REAL NOT NULL,
-    sum_tip_ptc REAL NOT NULL,
+    sum_tip_pct REAL NOT NULL,
     card_trips INTEGER NOT NULL,
     airport_trips INTEGER NOT NULL,
     cross_boro_trips INTEGER NOT NULL,
     sum_speed REAL NOT NULL,
-    PRIMARY KEY (pickup_date, pickup_hour, pu_location_id, payment_type_id, distance
-
+    PRIMARY KEY (pickup_date, pickup_hour, pu_location_id, payment_type_id, distance_band_id, fare_band_id)
 ) WITHOUT ROWID;
 
 CREATE TABLE IF NOT EXISTS agg_od (
@@ -132,11 +130,19 @@ CREATE TABLE IF NOT EXISTS data_quality_rules (
     rule_code TEXT PRIMARY KEY,
     action TEXT NOT NULL CHECK (action IN ('excluded', 'flagged', 'repaired')),
     description TEXT NOT NULL,
-    record_count INTEGER NOT NULL,
-
+    record_count INTEGER NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_trips_pickup-dt ON trips(pickup_datetime);
+CREATE TABLE IF NOT EXISTS data_quality_run (
+    run_id INTEGER PRIMARY KEY,
+    raw_rows INTEGER NOT NULL,
+    clean_rows INTEGER NOT NULL,
+    excluded_rows INTEGER NOT NULL
+);
+
+-- @indexes
+
+CREATE INDEX IF NOT EXISTS ix_trips_pickup_dt ON trips(pickup_datetime);
 CREATE INDEX IF NOT EXISTS ix_trips_pu_time ON trips(pu_location_id, pickup_datetime);
 CREATE INDEX IF NOT EXISTS ix_trips_do_time ON trips(do_location_id, pickup_datetime);
 CREATE INDEX IF NOT EXISTS ix_trips_route ON trips(pu_location_id, do_location_id);

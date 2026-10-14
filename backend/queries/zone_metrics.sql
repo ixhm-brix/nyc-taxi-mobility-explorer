@@ -7,4 +7,4 @@
     GROUP BY a.pu_location_id   
  ) s  
  JOIN zones z   ON z.location_id = s.location_id 
- JOIN boroughs  ON b.borough_id = z.borough_id; 
+ JOIN boroughs b ON b.borough_id = z.borough_id; 

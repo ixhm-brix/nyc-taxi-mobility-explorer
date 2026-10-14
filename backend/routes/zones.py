@@ -13,7 +13,7 @@ from backend.routes._common import filters, ok
 
 bp = Blueprint("zones", __name__) 
 ZONE_METRICS = {"trips", "revenue", "avg_fare", "avg_distance", "avg_duration", "avg_speed",
-                "fare_per_mile", "tip_pct", "airport_share", "croos_borough_share"} 
+                "fare_per_mile", "tip_pct", "airport_share", "cross_borough_share"} 
 _geojson_cache: dict = {} 
 
 
@@ -26,7 +26,7 @@ def geojson():
             "properties": {k: r[k] for k in ("location_id", "zone", "borough", "service_zone")}, 
             "geometry": json.loads(r["geojson"]), 
         } for r in query(render("geojson"))] 
-        _geojson_cache["fc"] = {"type": "FeatureCOllection", "features": features} 
+        _geojson_cache["fc"] = {"type": "FeatureCollection", "features": features} 
     return ok(_geojson_cache["fc"]) 
 
 
@@ -35,7 +35,7 @@ def geojson():
 def zone_metrics(): 
     f = filters() 
     where, params = f.where("agg", alias="a") 
-    return ok(query(render("zone_metrics",where), params),f) 
+    return ok(query(render("zone_metrics", where), params), f) 
 
 
 @bp.get("/api/zones/rank") 
@@ -67,15 +67,15 @@ def zone_detail(location_id: int):
     hourly = query(render("hourly", where_a), params_a) 
 
     od_where, od_params = replace(f, zone=None).where("od", alias="o") 
-    extra = "AND" + od_where[len("WHERE "):] if od_where else "" 
+    extra = "AND " + od_where[len("WHERE "):] if od_where else "" 
     dests = query(render("zone_flows", side="pu", other="do", extra=extra), [location_id] + od_params) 
     origins = query(render("zone_flows", side="do", other="pu", extra=extra), [location_id] + od_params) 
     return ok({
         "zone": info, 
         "metrics": metrics, 
         "hourly": hourly, 
-        "top_destination": top_k(dests, 8, lambda r: r["trips"]), 
-        "top_origin": top_k(origins, 8, lambda r: r["trips"]), 
+        "top_destinations": top_k(dests, 8, lambda r: r["trips"]), 
+        "top_origins": top_k(origins, 8, lambda r: r["trips"]), 
     }, f) 
 
 def _k(v, default, hi=100): 

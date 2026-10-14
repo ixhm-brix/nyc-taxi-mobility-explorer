@@ -38,7 +38,7 @@ def create_app():
 
     @app.errorhandler(FilterError)
     def bad_filter(exc):
-        return jsonify(error="invali_filter", message=str(exc)), 400
+        return jsonify(error="invalid_filter", message=str(exc)), 400
 
     @app.errorhandler(QueryTimeout) 
     def timeout(exc):
@@ -65,6 +65,8 @@ def create_app():
             resp.headers["Content-Encoding"] = "gzip"
             resp.headers["Vary"] = "Accept-Encoding"
         if request.path.startswith("/api/"):
+            resp.headers["Cache-Control"] = "public, max-age=300"
+        else:
             resp.headers["Cache-Control"] = "no-cache"
         return resp 
 

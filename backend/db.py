@@ -1,5 +1,5 @@
 """
-Database access: one read-only Sqlite connection database per threade, a samll 
+Database access: one read-only Sqlite connection database per thread, plus a small LRU cache of query results.
 """
 
 from __future__ import annotations 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-QUERY_DIR = Path(__file__).resolve.parent / "queries"
+QUERY_DIR = Path(__file__).resolve().parent / "queries"
 
 try:
     from dotenv import load_dotenv 
@@ -47,7 +47,7 @@ def get_connection():
         con = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, check_same_thread=False)
         con.row_factory = sqlite3.Row 
         con.execute("PRAGMA cache_size = -131072")
-        con.execute("PRAGME mmap_size = 1073741824")
+        con.execute("PRAGMA mmap_size = 1073741824")
         _local.con = con 
     return con 
 
@@ -70,9 +70,9 @@ class _LRU:
     def get(self, key): 
         with self.lock: 
             if key in self.data:
-                return self.data.move_to_end(key)
-            return self.data[key] 
-        return None 
+                self.data.move_to_end(key)
+                return self.data[key]
+        return None
 
     def put(self, key, value): 
         with self.lock:
@@ -87,9 +87,9 @@ _cache = _LRU(CACHE_SIZE)
 def query(sql: str, params: list | tuple = (), cache: bool = True) -> list[dict]:
     key = (sql, json.dumps(list(params), default=str )) 
     if cache: 
-        hit =_cache.get(key)
-        if hit is not None: 
-         return hit 
+        hit = _cache.get(key)
+        if hit is not None:
+            return hit
 
     con = get_connection()
     deadline = time.monotonic() + QUERY_TIMEOUT_S 

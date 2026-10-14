@@ -69,9 +69,9 @@ class Filters:
         return sorted(self.active() - SUPPORTED[target]) 
     # compiling  
     def where(self, target: str = "agg", alias: str = "", scan_area: bool = False) -> tuple[str, list] :
-        """ scan_area=True writes the borough test as '+col In(..)', which in result tells SQLite
+        """ scan_area=True writes the borough test as '+col IN (..)', which in result tells SQLite
         not to drive the query from the zone index. used by the trip explorer when the borough is large, 
-        so the ORDER BY index can be waliked instead of sorting millions."""
+        so the ORDER BY index can be walked instead of sorting millions."""
         p = f"{alias}." if alias else "" 
         clauses: list[str] = [] 
         params: list = [] 
@@ -82,7 +82,7 @@ class Filters:
             if self.start: 
                 clauses.append(f"{p}pickup_datetime >= ?"); params.append(self.start) 
             if self.end: 
-                nxt = (date.fromisofromat(self.end) + timedelta(days=1)).isoformat() 
+                nxt = (date.fromisoformat(self.end) + timedelta(days=1)).isoformat() 
                 clauses.append(f"{p}pickup_datetime < ?"); params.append(nxt) 
         elif target == "agg": 
             if self.start: 
@@ -94,7 +94,7 @@ class Filters:
             lo = 0 if self.hour_from is None else self.hour_from 
             hi = 23 if self.hour_to is None else self.hour_to 
             if lo <= hi: 
-                clauses.append(f"{p}pickup_hour >= ? OR {p}pickup_hour <= ?)") 
+                clauses.append(f"({p}pickup_hour >= ? AND {p}pickup_hour <= ?)") 
             else:
                 clauses.append(f"({p}pickup_hour >= ? OR {p}pickup_hour <= ?)") 
             params += [lo, hi] 
@@ -102,27 +102,27 @@ class Filters:
 
         if "days" in on: 
             if target == "od": 
-                kinds = {1 if d >=5 else 0 for d in self.days} 
+                kinds = {1 if d >= 5 else 0 for d in self.days} 
                 if len(kinds) == 1: 
                     clauses.append(f"{p}is_weekend = ?"); params.append(kinds.pop()) 
-                else:
-                    clauses.append(_in(f"{p}pickup_dow", self.days)); params += self.days 
+            else:
+                clauses.append(_in(f"{p}pickup_dow", self.days)); params += self.days
 
         if self.zone is not None:  
             clauses.append(f"{p}pu_location_id = ?"); params.append(self.zone) 
         elif self.borough is not None: 
-            plus = "+" if scan_area else"" 
+            plus = "+" if scan_area else "" 
             clauses.append(f"{plus}{p}pu_location_id IN (SELECT location_id FROM zones WHERE borough_id = ?)") 
             params.append(self.borough) 
 
         if target != "od": 
-            for name, col in (("payment", "payment_type_id"), ("dist", "distance"),
+            for name, col in (("payment", "payment_type_id"), ("dist", "distance_band_id"),
                               ("fare", "fare_band_id")): 
                 values = getattr(self, name) 
                 if values: 
                     clauses.append(_in(f"{p}{col}", values)); params += values 
 
-        return ("WHERE" + " AND ".join(clauses)) if clauses else "", params 
+        return ("WHERE " + " AND ".join(clauses)) if clauses else "", params 
 
     def od_is_partial(self) -> bool: 
         """ True when a day selection mixes weekdays and weekends in a way agg_od can't express""" 
@@ -130,40 +130,38 @@ class Filters:
             return False 
         return len({1 if d >= 5 else 0 for d in self.days}) > 1 
 
-    # helpers funct
-    def _in(col : str, values: list) -> str: 
-        return f"{col} IN ({', '.join('?' * len(values))})" 
+# helpers
+def _in(col : str, values: list) -> str: 
+    return f"{col} IN ({', '.join('?' * len(values))})" 
 
-    def _date(v, name): 
-        if v in (None, ""): 
-            return None 
-        if not DATE_RE.match(v): 
-            raise FilterError(f"{name} must be YYYY-MM-DD") 
-        try: 
-            date.fromisoformat(v) 
-        except ValueError as exc: 
-            raise FilterError(f"{name} is not a valid date") from exc 
-        return v 
+def _date(v, name): 
+    if v in (None, ""): 
+        return None 
+    if not DATE_RE.match(v): 
+        raise FilterError(f"{name} must be YYYY-MM-DD") 
+    try: 
+        date.fromisoformat(v) 
+    except ValueError as exc: 
+        raise FilterError(f"{name} is not a valid date") from exc 
+    return v 
 
-    def _int(v, name, lo, hi): 
-        if v in (None, ""): 
-            return None 
-        try: 
-            n = int(v) 
-        except (TypeError, ValueError) as exc: 
-            raise FilterError(f"{name} must be an integer") from exc 
-        if not lo <= n <= hi:
-            raise FilterError(f"{name} must be between {lo} and {hi}") 
-        return n 
+def _int(v, name, lo, hi): 
+    if v in (None, ""): 
+        return None 
+    try: 
+        n = int(v) 
+    except (TypeError, ValueError) as exc: 
+        raise FilterError(f"{name} must be an integer") from exc 
+    if not lo <= n <= hi:
+        raise FilterError(f"{name} must be between {lo} and {hi}") 
+    return n 
 
-    def _int_list(v, name, lo, hi): 
-        if v in (None, ""): 
-            return [] 
-        out = [] 
-        for part in str(v).split(","): 
-            n = _int(part.strip(), name, lo, hi) 
-            if n is not None and n not in out:
-                out.append(n) 
-        return out 
-    
- 
+def _int_list(v, name, lo, hi): 
+    if v in (None, ""): 
+        return [] 
+    out = [] 
+    for part in str(v).split(","): 
+        n = _int(part.strip(), name, lo, hi) 
+        if n is not None and n not in out:
+            out.append(n) 
+    return out 

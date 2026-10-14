@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from download import download, DEFAULT_MONTHS
 from load import load_all, ROOT
 from clean import clean, set_period, write_summary
@@ -21,7 +21,7 @@ RENAME = {
     "tpep_pickup_datetime": "pickup_datetime",
     "tpep_dropoff_datetime": "dropoff_datetime",
     "RatecodeID": "rate_code_id",
-    "store_and_fwd_flag": "store_and_fwd",
+    "store_and_fwd_flag": "store_and_fwd_flag",
     "PULocationID": "pu_location_id",
     "DOLocationID": "do_location_id",
     "payment_type": "payment_type_id",
@@ -39,7 +39,7 @@ def normalise(df: pd.DataFrame) -> pd.DataFrame:
     for c in ("vendor_id", "rate_code_id", "pu_location_id", "do_location_id", "payment_type_id"):
         df[c] = df[c].astype("int16")
     df["passenger_count"] = df["passenger_count"].astype("Int8")
-    df["store_and_fwd"] = (df["store_and_fwd"] == "Y").astype("int8")
+    df["store_and_fwd_flag"] = (df["store_and_fwd_flag"] == "Y").astype("int8")
     return df.sort_values("pickup_datetime").reset_index(drop=True)
 
 
