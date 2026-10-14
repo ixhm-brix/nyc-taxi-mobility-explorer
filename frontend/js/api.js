@@ -30,4 +30,4 @@ const api = {
   trip(id) { return fetchJSON(`${API_BASE}/trips/${id}`); },
   quality() { return fetchJSON(`${API_BASE}/quality`); },
 };
-//API layer ready
+// verified backend API endpints and query helpers

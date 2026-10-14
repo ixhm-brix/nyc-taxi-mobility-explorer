@@ -48,4 +48,4 @@ function getFilters() {
   if (filters.hour_to && !filters.hour_from) filters.hour_from = 0;
   return filters;
 }
-//filter handlers active
+//verified filter event handlerd and querry strings parser

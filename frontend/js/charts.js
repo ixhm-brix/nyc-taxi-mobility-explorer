@@ -48,4 +48,5 @@ const charts = {
     drawChart("chart-distance", "bar", rows.map(r => r.label), rows.map(r => r.fare_per_mile), "Fare per mile ($)");
   },
 };
-// Chart rendering module verified
+
+// verified chart.js rendering and dataset bindings
