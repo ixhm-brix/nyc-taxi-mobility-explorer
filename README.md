@@ -2,6 +2,8 @@
 
 How New York moved in January 2019. This project cleans **7.7 million NYC yellow-taxi trips**, stores them in a normalised SQLite database and serves an interactive dashboard for exploring urban mobility by time, place, route and price.
 
+![Architecture](docs/architecture.png)
+
 | | |
 |---|---|
 | **Pipeline** | Python · pandas · pyarrow. Loads the parquet trips, zone lookup and zone shapefile; applies 16 cleaning rules (every exclusion is logged) and engineers 4 features. |
@@ -9,6 +11,9 @@ How New York moved in January 2019. This project cleans **7.7 million NYC yellow
 | **Backend** | Flask JSON API: parameterised SQL, validated filters, result cache, query watchdog. |
 | **Algorithm** | Hand-written binary min-heap for top-K ranking, O(n log k) (`algorithms/top_k_heap.py`). |
 | **Frontend** | Plain HTML, CSS and JavaScript with Chart.js: a filter form, summary cards, charts, ranking tables, a sortable trip table and a trip-detail popup. |
+
+Further documentation:
+- [docs/api_contract.md](docs/api_contract.md): every API endpoint.
 
 ---
 
@@ -99,7 +104,8 @@ nyc-taxi-mobility-explorer/
 │   ├── index.html
 │   ├── css/styles.css
 │   └── js/                api.js (all fetches) · charts.js (Chart.js) · filters.js · app.js
-└── codevibe-reports/      CodeVibe analysis reports
+├── codevibe-reports/      CodeVibe analysis reports
+└── docs/                  architecture.png · api_contract.md
 ```
 
 ## Cleaning results
